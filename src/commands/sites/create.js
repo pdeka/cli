@@ -46,6 +46,12 @@ class SitesCreateCommand extends Command {
     let userName
     let site
 
+    console.log("Account Slug: " + accountSlug );
+    console.log("Flags: " + flags );
+    console.log("Username: " + userName );
+    console.log("Site: " + site );
+
+
     // Allow the user to reenter site name if selected one isn't available
     const inputSiteName = async name => {
       if (!userName) userName = await api.getCurrentUser()
