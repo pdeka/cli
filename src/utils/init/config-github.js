@@ -56,21 +56,24 @@ async function configGithub(ctx, site, repo) {
     defaultBuildDir = build.publish
   }
   if (build && build.functions) console.log('Netlify functions folder is ' + chalk.yellow(build.functions))
-  const { buildCmd, buildDir } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'buildCmd',
-      message: 'Your build command (hugo build/yarn run build/etc):',
-      filter: val => (val === '' ? '# no build command' : val),
-      default: defaultBuildCmd
-    },
-    {
-      type: 'input',
-      name: 'buildDir',
-      message: 'Directory to deploy (blank for current dir):',
-      default: defaultBuildDir
-    }
-  ])
+  const buildCmd = defaultBuildCmd;
+  const buildDir = defaultBuildDir;
+  //Prabin: Commented as not needed. 
+  // const { buildCmd, buildDir } = await inquirer.prompt([
+  //   {
+  //     type: 'input',
+  //     name: 'buildCmd',
+  //     message: 'Your build command (hugo build/yarn run build/etc):',
+  //     filter: val => (val === '' ? '# no build command' : val),
+  //     default: defaultBuildCmd
+  //   },
+  //   {
+  //     type: 'input',
+  //     name: 'buildDir',
+  //     message: 'Directory to deploy (blank for current dir):',
+  //     default: defaultBuildDir
+  //   }
+  // ])
 
   const tomlpath = path.join(ctx.netlify.site.root, 'netlify.toml')
   const tomlDoesNotExist = !fs.existsSync(tomlpath)
