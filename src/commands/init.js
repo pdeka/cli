@@ -158,31 +158,32 @@ git remote add origin https://github.com/YourUserName/RepoName.git
     }
 
     if (!siteData) {
-      const NEW_SITE = '+  Create & configure a new site'
-      const EXISTING_SITE = '⇄  Connect this directory to an existing Netlify site'
-
-      const initializeOpts = [EXISTING_SITE, NEW_SITE]
-
-      const { initChoice } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'initChoice',
-          message: 'What would you like to do?',
-          choices: initializeOpts
-        }
-      ])
-
-      // create site or search for one
-      if (initChoice === NEW_SITE) {
+      //Prabin: Commented as we want to create a new site all the time.
+      // const NEW_SITE = '+  Create & configure a new site'
+      // const EXISTING_SITE = '⇄  Connect this directory to an existing Netlify site'
+      //
+      // const initializeOpts = [EXISTING_SITE, NEW_SITE]
+      //
+      // const { initChoice } = await inquirer.prompt([
+      //   {
+      //     type: 'list',
+      //     name: 'initChoice',
+      //     message: 'What would you like to do?',
+      //     choices: initializeOpts
+      //   }
+      // ])
+      //
+      // // create site or search for one
+      // if (initChoice === NEW_SITE) {
         await track('sites_initStarted', {
           type: 'new site'
         })
         // run site:create command
         siteData = await SitesCreateCommand.run([])
-      } else if (initChoice === EXISTING_SITE) {
-        // run link command
-        siteData = await LinkCommand.run([], false)
-      }
+      // } else if (initChoice === EXISTING_SITE) {
+      //   // run link command
+      //   siteData = await LinkCommand.run([], false)
+      // }
     }
 
     // Check for existing CI setup
