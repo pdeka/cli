@@ -157,6 +157,16 @@ git remote add origin https://github.com/YourUserName/RepoName.git
       this.error(repo.error)
     }
 
+
+    const siteName =
+      'kenekt-site-' +
+      Math.random()
+        .toString(36)
+        .replace(/[^a-z]+/g, '')
+        .substr(0, 8);
+
+    this.log("Site Name: " + siteName);
+
     if (!siteData) {
       //Prabin: Commented as we want to create a new site all the time.
       // const NEW_SITE = '+  Create & configure a new site'
@@ -179,7 +189,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
           type: 'new site'
         })
         // run site:create command
-        siteData = await SitesCreateCommand.run([])
+        siteData = await SitesCreateCommand.run(["--account-slug=kenekt", "--name=" + siteName])
       // } else if (initChoice === EXISTING_SITE) {
       //   // run link command
       //   siteData = await LinkCommand.run([], false)
