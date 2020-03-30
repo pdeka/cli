@@ -10,8 +10,9 @@ const globalConfigDefaults = {
   cliId: uuidv4()
 }
 
+//Prabin - change path to make it local. The .netlify folder is one level below the current working dir.
 const globalConfigOptions = {
-  configPath: path.join(os.homedir(), '.netlify', 'config.json')
+  configPath: path.join('../', '.netlify', 'config.json')
 }
 
 module.exports = new Configstore(null, globalConfigDefaults, globalConfigOptions)
