@@ -18,7 +18,7 @@ async function configGithub(ctx, site, repo) {
 
   let ghtoken = globalConfig.get(`users.${current}.auth.github`)
 
-  console.log("GITHUB TOKEN:::::::::::::::::" + ghtoken);
+  ctx.log("GITHUB TOKEN:::::::::::::::::" + ghtoken);
 
   if (!ghtoken || !ghtoken.user || !ghtoken.token) {
     const newToken = await ghauth({
