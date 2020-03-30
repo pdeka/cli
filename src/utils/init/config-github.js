@@ -18,6 +18,8 @@ async function configGithub(ctx, site, repo) {
 
   let ghtoken = globalConfig.get(`users.${current}.auth.github`)
 
+  console.log("GITHUB TOKEN:::::::::::::::::" + ghtoken);
+
   if (!ghtoken || !ghtoken.user || !ghtoken.token) {
     const newToken = await ghauth({
       scopes: ['admin:org', 'admin:public_key', 'repo', 'user'],
@@ -58,7 +60,7 @@ async function configGithub(ctx, site, repo) {
   if (build && build.functions) console.log('Netlify functions folder is ' + chalk.yellow(build.functions))
   const buildCmd = defaultBuildCmd;
   const buildDir = defaultBuildDir;
-  //Prabin: Commented as not needed. 
+  //Prabin: Commented as not needed.
   // const { buildCmd, buildDir } = await inquirer.prompt([
   //   {
   //     type: 'input',
