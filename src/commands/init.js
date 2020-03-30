@@ -166,6 +166,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
         .substr(0, 8);
 
     this.log("Site Name: " + siteName);
+    this.log("Current dir: " + process.cwd());
 
     if (!siteData) {
       //Prabin: Commented as we want to create a new site all the time.
