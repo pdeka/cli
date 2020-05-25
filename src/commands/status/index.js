@@ -3,13 +3,13 @@ const prettyjson = require('prettyjson')
 const get = require('lodash.get')
 const chalk = require('chalk')
 const clean = require('clean-deep')
-const envinfo = require('envinfo')
 const { flags } = require('@oclif/command')
 
 class StatusCommand extends Command {
   async run() {
     const { globalConfig, api, site } = this.netlify
     const { flags } = this.parse(StatusCommand)
+
     const current = globalConfig.get('userId')
     const [accessToken] = this.getConfigToken()
 
@@ -36,7 +36,7 @@ class StatusCommand extends Command {
       // 'Account id': get(personal, 'id'),
       // Name: get(personal, 'billing_name'),
       Email: get(user, 'email'),
-      Github: ghuser
+      Github: ghuser,
     }
     const teamsData = {}
 
@@ -52,7 +52,7 @@ class StatusCommand extends Command {
 
     if (!site.configPath) {
       this.logJson({
-        account: cleanAccountData
+        account: cleanAccountData,
       })
       this.exit()
     }
@@ -75,19 +75,6 @@ class StatusCommand extends Command {
       this.error(e)
     }
 
-    if (flags.verbose) {
-      this.log()
-      this.log(`────────────────────┐
- Environment Info   │
-────────────────────┘`)
-      const data = await envinfo.run({
-        System: ['OS', 'CPU'],
-        Binaries: ['Node', 'Yarn', 'npm'],
-        Browsers: ['Chrome', 'Edge', 'Firefox', 'Safari'],
-        npmGlobalPackages: ['netlify']
-      })
-      this.log(data)
-    }
     // Json only logs out if --json flag is passed
     if (flags.json) {
       this.logJson({
@@ -97,8 +84,8 @@ class StatusCommand extends Command {
           'config-path': site.configPath,
           'admin-url': siteData.admin_url,
           'site-url': siteData.ssl_url || siteData.url,
-          'site-id': siteData.id
-        }
+          'site-id': siteData.id,
+        },
       })
     }
 
@@ -111,7 +98,7 @@ class StatusCommand extends Command {
         'Netlify TOML': site.configPath,
         'Admin URL': chalk.magentaBright(siteData.admin_url),
         'Site URL': chalk.cyanBright(siteData.ssl_url || siteData.url),
-        'Site Id': chalk.yellowBright(siteData.id)
+        'Site Id': chalk.yellowBright(siteData.id),
       })
     )
     this.log()
@@ -122,8 +109,8 @@ StatusCommand.description = `Print status information`
 
 StatusCommand.flags = {
   verbose: flags.boolean({
-    description: 'Output system info'
-  })
+    description: 'Output system info',
+  }),
 }
 
 module.exports = StatusCommand

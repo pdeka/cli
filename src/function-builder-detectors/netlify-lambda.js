@@ -1,7 +1,8 @@
 const { existsSync, readFileSync } = require('fs')
 const execa = require('execa')
+const { getEnvSettings } = require('../utils/env')
 
-module.exports = function() {
+module.exports = async function(projectDir) {
   if (!existsSync('package.json')) {
     return false
   }
@@ -25,8 +26,15 @@ module.exports = function() {
     }
   }
 
+  let envConfig = {}
+  const envSettings = await getEnvSettings(projectDir)
+  if (envSettings.file) {
+    envConfig = envSettings.vars
+  }
+
   if (settings.npmScript) {
-    settings.build = () => execa(yarnExists ? 'yarn' : 'npm', ['run', settings.npmScript])
+    settings.build = () =>
+      execa(yarnExists ? 'yarn' : 'npm', ['run', settings.npmScript], { env: { ...process.env, ...envConfig } })
     settings.builderName = 'netlify-lambda'
     return settings
   }

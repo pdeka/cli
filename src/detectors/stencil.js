@@ -13,17 +13,17 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['start'],
-    preferredCommand: 'stencil build --dev --watch --serve'
+    preferredCommand: 'stencil build --dev --watch --serve',
   })
 
   return {
-    type: 'stencil',
+    framework: 'stencil',
     command: getYarnOrNPMCommand(),
     port: 8888, // the port that the Netlify Dev User will use
-    proxyPort: 3333, // the port that stencil normally outputs
+    frameworkPort: 3333, // the port that stencil normally outputs
     env: { ...process.env, BROWSER: 'none', PORT: 3000 },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${3000}(/)?`, 'g'),
-    dist: 'www'
+    dist: 'www',
   }
 }

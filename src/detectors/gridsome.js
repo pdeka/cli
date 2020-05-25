@@ -9,17 +9,17 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['develop'],
-    preferredCommand: 'gridsome develop'
+    preferredCommand: 'gridsome develop',
   })
 
   return {
-    type: 'gridsome',
+    framework: 'gridsome',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 8080,
+    frameworkPort: 8080,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${8080}(/)?`, 'g'),
-    dist: 'static'
+    dist: 'dist',
   }
 }

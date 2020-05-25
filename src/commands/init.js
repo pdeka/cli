@@ -2,7 +2,6 @@ const { flags } = require('@oclif/command')
 const chalk = require('chalk')
 const get = require('lodash.get')
 const Command = require('../utils/command')
-const SitesWatchCommand = require('./watch')
 const configManual = require('../utils/init/config-manual')
 const configGithub = require('../utils/init/config-github')
 const getRepoData = require('../utils/get-repo-data')
@@ -30,9 +29,8 @@ class InitCommand extends Command {
       payload: {
         command: 'init',
         manual: flags.manual,
-        watch: flags.watch,
-        force: flags.force
-      }
+        force: flags.force,
+      },
     })
 
     // const hasFlags = !isEmpty(flags)
@@ -105,8 +103,8 @@ git remote add origin https://github.com/YourUserName/RepoName.git
           type: 'list',
           name: 'noGitRemoteChoice',
           message: 'Do you want to create a Netlify site without a git repository?',
-          choices: [NEW_SITE_NO_GIT, NO_ABORT]
-        }
+          choices: [NEW_SITE_NO_GIT, NO_ABORT],
+        },
       ])
 
       // create site or search for one
@@ -189,7 +187,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
       // // create site or search for one
       // if (initChoice === NEW_SITE) {
         await track('sites_initStarted', {
-          type: 'new site'
+          type: 'new site',
         })
         // run site:create command
         siteData = await SitesCreateCommand.run(["--account-slug=kenekt", "--name=" + siteName])
@@ -207,10 +205,6 @@ git remote add origin https://github.com/YourUserName/RepoName.git
       const siteName = get(siteData, 'name')
       this.log(`This site "${siteName}" is configured to automatically deploy via ${remoteBuildRepo}`)
       // TODO add support for changing github repo in site:config command
-
-      if (flags.watch) {
-        await SitesWatchCommand.run([])
-      }
       this.exit()
     }
 
@@ -226,7 +220,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
             await configGithub(this, siteData, repo)
           } catch (e) {
             this.warn(`GitHub error: ${e.status}`)
-            if (e.code === 404) {
+            if (e.status === 404) {
               this.error(
                 `Does the repository ${repo.repo_path} exist and do you have the correct permissions to set up deploy keys?`
               )
@@ -255,9 +249,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
   ${chalk.cyanBright.bold('netlify open')}   Open the Netlify admin URL of your site
   `)
 
-    if (flags.watch) {
-      await SitesWatchCommand.run([])
-    }
+    return siteData
   }
 }
 
@@ -266,17 +258,13 @@ InitCommand.description = `Configure continuous deployment for a new or existing
 InitCommand.flags = {
   manual: flags.boolean({
     char: 'm',
-    description: 'Manually configure a git remote for CI'
-  }),
-  watch: flags.boolean({
-    char: 'w',
-    description: 'Make the CLI wait for the first deploy to complete after setting up CI'
+    description: 'Manually configure a git remote for CI',
   }),
   force: flags.boolean({
-    description: 'Reinitialize CI hooks if the linked site is already configured to use CI'
+    description: 'Reinitialize CI hooks if the linked site is already configured to use CI',
   }),
   gitRemoteName: flags.string({
-    description: 'Name of Git remote to use. e.g. "origin"'
+    description: 'Name of Git remote to use. e.g. "origin"',
   }),
 }
 

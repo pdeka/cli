@@ -27,7 +27,7 @@ Netlify Dev brings the power of Netlify's Edge Logic layer, [serverless function
        └──────────┘
 ```
 
-With project detectors, it automatically detects common tools like Gatsby, Hugo, React Static, Eleventy, and more, to give a zero config setup for your local dev server and can help scaffolding new functions as you work on them. Read our blogpost for [more on detectors and how you can contribute](https://www.netlify.com/blog/2019/04/24/zero-config-yet-technology-agnostic-how-netlify-dev-detectors-work/)!
+With project detectors, it automatically detects common tools like Gatsby, Hugo, React Static, Eleventy, and more, to give a zero config setup for your local dev server and can help scaffolding new functions as you work on them. Read our blog post for [more on detectors and how you can contribute](https://www.netlify.com/blog/2019/04/24/zero-config-yet-technology-agnostic-how-netlify-dev-detectors-work/)!
 
 ## Prerequisites
 
@@ -106,23 +106,22 @@ Netlify Dev is meant to work with zero config for the majority of users, by usin
 # sample netlify.toml
 [build]
   command = "yarn run build"
-  functions = "functions" # netlify dev uses this to know where to scaffold and serve your functions
+  functions = "functions" # netlify dev uses this directory to scaffold and serve your functions
   publish = "dist"
 
-# note: each of these fields are OPTIONAL
+# note: each of these fields are OPTIONAL, with an exception that when you're specifying "command" and "port", you must specify framework = "#custom"
 [dev]
   command = "yarn start" # Command to start your dev server
-  port = 3000 # Port that the dev server will be listening on
-  functionsPort = 34567 # port for functions server
-  targetPort = 3000 # Port of target app server
-  publish = "dist" # If you use a _redirect file, provide the path to your static content folder
+  targetPort = 3000 # The port for your application server, framework or site generator
+  port = 8888 # The port that the netlify dev will be accessible on
+  publish = "dist" # The path to your static content folder
   jwtRolePath = "app_metadata.authorization.roles" # Object path we should look for role values for JWT based redirects
   autoLaunch = true # a Boolean value that determines if Netlify Dev launches the local server address in your browser
 ```
 
 ## Project detection
 
-Netlify Dev will attempt to detect the SSG or build command that you are using, and run these on your behalf, while adding other development utilities. If you have a JavaScript project, it looks for the best `package.json` script to run for you, using simple heuristics, so you can use the full flexibility of npm scripts. We may add more intelligence to this in future.
+Netlify Dev will attempt to detect the site generator or build command that you are using, and run these on your behalf, while adding other development utilities. If you have a JavaScript project, it looks for the best `package.json` script to run for you, using simple heuristics, so you can use the full flexibility of npm scripts. We may add more intelligence to this in the future.
 
 **Overriding the detectors**: The number of [project types which Netlify Dev can detect](https://github.com/netlify/cli/tree/master/src/detectors) is growing, but if yours is not yet supported (contributions welcome!), you can instruct Netlify Dev to run the project on your behalf by declaring it in a `[dev]` block of your `netlify.toml` file.
 
@@ -130,22 +129,34 @@ Netlify Dev will attempt to detect the SSG or build command that you are using, 
 # sample dev block in the toml
 # note: each of these fields are OPTIONAL and should only be used if you need an override
 [dev]
+  framework = "#custom"
   command = "yarn start" # Command to start your dev server
-  port = 3000 # Port that the dev server will be listening on
-  functionsPort = 34567 # port for functions server
+  port = 8888 # The port that the netlify dev will be accessible on
   publish = "dist" # If you use a _redirect file, provide the path to your static content folder
 ```
 
-<details>
-<summary>
-<b>Explanation of ports in Netlify Dev</b>
-</summary>
+Or you if your project is being detected incorrectly or positive by multiple
+detectors you can specify `framework` option to test only one detector
+against your project.
+
+```toml
+[dev]
+  framework = "create-react-app" # or "#static" to force a static server
+```
+
+The `framework` option should be one of the available
+[project types which Netlify Dev can detect](https://github.com/netlify/cli/tree/master/src/detectors)
+or `#auto` (default) to test all available detectors, `#static` for a static
+file server or `#custom` to use `command` option to run an app server and
+`targetPort` option to connect to it.
+
+## Explanation of ports in Netlify Dev
 
 There will be a number of ports that you will encounter when using Netlify Dev, especially when running a static site generator like Gatsby which has its own dev server. All the port numbers can be a bit confusing, so here is a brief explainer.
 
-- If your SSG has a devserver on port 8000 for example, Netlify Dev needs to be told to proxy that port so it can merge it in with the rest of the local Netlify environment (say, running on port 8888), which is what you want to get the full Netlify Dev experience with Functions, Redirects, and so on.
+- If your site generator runs on port 8000 for example, Netlify Dev needs to be told to connect to that port, so, it can route the requests successfully to the site generator along with the rest of the local Netlify environment
 - If you're running a project we have a detector for, we hardcode those conventional ports so you don't have to supply it yourself. If we have multiple detectors that match, we'll ask you to choose.
-- However, sometimes you're using some other project (we welcome contributions for detectors!) or just have a custom port you want Netlify Dev to point to for some reason. This is when you go to the `netlify.toml` `[dev]` block to specify exactly what port we should listen to.
+- However, sometimes you're using some unrecogized site generator or just have a server you want Netlify Dev to connect to. This is when you go to the `netlify.toml` `[dev]` block to specify exactly what port we should listen to.
 
 As for which port to use while doing local development in Netlify Dev, always look for this box in your console output and use that:
 
@@ -157,7 +168,14 @@ As for which port to use while doing local development in Netlify Dev, always lo
    └──────────────────────────────────────────────────────────────┘
 ```
 
-</details>
+**Specifying custom ports for Netlify Dev**
+
+Netlify Dev allows you to specify the following parameters for port as both flags and in config file (`netlify.toml` etc.):
+
+- `targetPort`: The port for your application server, framework or site generator.
+- `port`: The port for the Netlify Dev server, the one you'll open in the browser.
+
+Netlify Dev tries to acquire these ports but if any of them is not available (already in use by another application), it will throw an error and let you know.
 
 ## Redirects
 
@@ -173,9 +191,16 @@ The order of precedence for applying redirect rules is:
 
 See the [Redirects Documentation](https://www.netlify.com/docs/redirects/) for more information on Netlify's redirect and proxying capabilities.
 
+## Environment Variables
+
+If the current project is linked to a Netlify site (`netlify link`), environment variables are pulled down from production and populated in `netlify dev` server. This functionality requires that you're logged in (`netlify login`) and connected to the internet when running `netlify dev`.
+
+Netlify Dev also supports local environment variables through `.env` files.
+Netlify Dev will look in project root directory for `.env` file and will provide those variables to the spawned site generator/server and Netlify Functions.
+
 ## Netlify Functions
 
-Netlify can also create serverless functions for you locally as part of Netlify Functions. The serverless functions can then be run by Netlify Dev in the same way that wold be when deployed to the cloud.
+Netlify can also create serverless functions for you locally as part of Netlify Functions. The serverless functions can then be run by Netlify Dev in the same way that would be when deployed to the cloud.
 
 ```
 ## list of major functionality
@@ -227,12 +252,12 @@ module.exports = {
   addons: [
     {
       addonName: 'fauna',
-      addonDidInstall: () => {} // post install function to run after installing addon, eg. for setting up schema
-    }
+      addonDidInstall: () => {}, // post install function to run after installing addon, eg. for setting up schema
+    },
   ],
   onComplete() {
     console.log(`custom-template function created from template!`)
-  }
+  },
 }
 ```
 
@@ -285,11 +310,11 @@ We don't expect everyone to use function builders, but we expect many will, and 
 
 With this feature, pre-Netlify Dev projects like https://github.com/netlify/create-react-app-lambda can immediately use the `netlify dev` command with no change to code. Currently, we only offer detection for scripts with `netlify-lambda build $SRCFOLDER`. More ideas are welcome.
 
-Netlify Dev will watch `netlify-lambda`'s source folder and rebuild whenever the source file changes, eliminating the need for `netlify-lambda serve` since we dont want a duplicate functions server.
+Netlify Dev will watch `netlify-lambda`'s source folder and rebuild whenever the source file changes, eliminating the need for `netlify-lambda serve` since we don't want a duplicate functions server.
 
 **Bring Your Own Function Builder**
 
-We may offer detection for more function builders in future, and also let you specify function build commands in the `netlify.toml` `[dev]` block. Please share your usecase with us if you are likely to need this.
+We may offer detection for more function builders in future, and also let you specify function build commands in the `netlify.toml` `[dev]` block. Please share your use case with us if you are likely to need this.
 
 ### Using Add-ons
 
@@ -318,9 +343,6 @@ Thanks for contributing! You'll need to follow these steps to run Netlify CLI an
 1. uninstall any globally installed versions of `netlify-cli`
 2. clone and install deps for https://github.com/netlify/cli
 3. `npm link` from inside the `cli` folder
-4. clone and install deps for this repo
-5. inside the `netlify-dev-plugin` folder, run `yarn link`
-6. inside the `cli` folder, run `yarn link "netlify-dev-plugin"`
 
 Now you're both ready to start testing `netlify dev` and to contribute to the project! Note these are untested instructions, please get in touch if you're unable to follow them clearly and we'll work with you. Or ping [@swyx](https://twitter.com/swyx).
 

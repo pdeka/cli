@@ -7,7 +7,7 @@ const globalConfigDefaults = {
   /* disable stats from being sent to Netlify */
   telemetryDisabled: false,
   /* cliId */
-  cliId: uuidv4()
+  cliId: uuidv4(),
 }
 
 //Prabin - change path to make it local. The .netlify folder is one level below the current working dir.

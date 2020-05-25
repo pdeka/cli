@@ -1,22 +1,16 @@
 const build = require('@netlify/build')
-const { getConfigPath } = require('@netlify/config')
 const { flags } = require('@oclif/command')
 const Command = require('../../utils/command')
-const { parseRawFlags } = require('../../utils/parse-raw-flags')
 
 class BuildCommand extends Command {
   // Run Netlify Build
   async run() {
-    /*
-      @TODO remove this.getOptions() & use the parsed config from Command.
-      this.netlify.config contains resolved config via @netlify/config
-      @netlify/build currently takes a path to config and resolves config values again
-    */
-    const options = await this.getOptions()
+    const options = this.getOptions()
+    this.checkOptions(options)
 
     await this.config.runHook('analytics', {
       eventName: 'command',
-      payload: { command: 'build', dry: options.dry }
+      payload: { command: 'build', dry: Boolean(options.dry) },
     })
 
     const success = await build(options)
@@ -25,43 +19,44 @@ class BuildCommand extends Command {
   }
 
   // Retrieve Netlify Build options
-  async getOptions() {
-    const { site } = this.netlify
-    const { raw } = this.parse(BuildCommand)
-    const { dry = false } = parseRawFlags(raw)
+  getOptions() {
+    // We have already resolved the configuration using `@netlify/config`
+    // This is stored as `this.netlify.cachedConfig` and can be passed to
+    // `@netlify/build --cachedConfig`.
+    const cachedConfig = JSON.stringify(this.netlify.cachedConfig)
+    const {
+      flags: { dry },
+    } = this.parse(BuildCommand)
     const [token] = this.getConfigToken()
+    return { cachedConfig, token, dry, mode: 'cli' }
+  }
 
-    // Try current directory first, then site root
-    const config = (await getConfigPath()) || (await getConfigPath(undefined, this.netlify.site.root))
+  checkOptions({ cachedConfig, token }) {
+    const { siteInfo = {} } = JSON.parse(cachedConfig)
+    if (!siteInfo.id && process.env.NODE_ENV !== 'test') {
+      console.error('Could not find the site ID. Please run netlify link.')
+      this.exit(1)
+    }
 
-    let options = {
-      config,
-      token,
-      dry
+    if (!token) {
+      console.error('Could not find the access token. Please run netlify login.')
+      this.exit(1)
     }
-    if (site.id) {
-      options.siteId = site.id
-    }
-    return options
   }
 }
 
 // Netlify Build programmatic options
 BuildCommand.flags = {
   dry: flags.boolean({
-    description: 'Dry run: show instructions without running them'
+    description: 'Dry run: show instructions without running them',
   }),
   context: flags.string({
-    description: 'Build context'
-  })
+    description: 'Build context',
+  }),
 }
 
-BuildCommand.description = `Beta - Netlify build`
+BuildCommand.description = `(Beta) Build on your local machine`
 
 BuildCommand.examples = ['netlify build']
-
-BuildCommand.strict = false
-
-BuildCommand.hidden = true
 
 module.exports = BuildCommand

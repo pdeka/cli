@@ -5,11 +5,18 @@ const cli = require('cli-ux').default
 const prettyjson = require('prettyjson')
 const chalk = require('chalk')
 
+const InitCommand = require('./init')
+
 class SitesWatchCommand extends Command {
   async run() {
     await this.authenticate()
     const client = this.netlify.api
-    const siteId = this.netlify.site.id
+    let siteId = this.netlify.site.id
+
+    if (!siteId) {
+      const siteData = await InitCommand.run([])
+      siteId = siteData.id
+    }
 
     // wait for 1 sec for everything to kickoff
     console.time('Deploy time')
@@ -18,8 +25,8 @@ class SitesWatchCommand extends Command {
     await this.config.runHook('analytics', {
       eventName: 'command',
       payload: {
-        command: 'watch'
-      }
+        command: 'watch',
+      },
     })
 
     // Get latest commit and look for that
@@ -57,7 +64,7 @@ class SitesWatchCommand extends Command {
       this.log(
         prettyjson.render({
           URL: siteData.ssl_url || siteData.url,
-          Admin: siteData.admin_url
+          Admin: siteData.admin_url,
         })
       )
       console.timeEnd('Deploy time')
@@ -79,7 +86,7 @@ async function waitForBuildFinish(api, siteId) {
   await pWaitFor(waitForBuildToFinish, {
     interval: 1000,
     timeout: 1.2e6, // 20 mins,
-    message: 'Timeout while waiting for deploy to finish'
+    message: 'Timeout while waiting for deploy to finish',
   })
 
   // return only when build done or timeout happens

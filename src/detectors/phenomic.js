@@ -9,17 +9,17 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['start'],
-    preferredCommand: 'phenomic start'
+    preferredCommand: 'phenomic start',
   })
 
   return {
-    type: 'phenomic',
+    framework: 'phenomic',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 3333,
+    frameworkPort: 3333,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${3333}(/)?`, 'g'),
-    dist: 'public'
+    dist: 'public',
   }
 }

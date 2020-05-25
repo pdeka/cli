@@ -10,7 +10,7 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['docs:dev', 'dev', 'run'],
-    preferredCommand: 'vuepress dev'
+    preferredCommand: 'vuepress dev',
   })
 
   if (possibleArgsArrs.length === 0) {
@@ -19,13 +19,13 @@ module.exports = function() {
   }
 
   return {
-    type: 'vuepress',
+    framework: 'vuepress',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 8080,
+    frameworkPort: 8080,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${8080}(/)?`, 'g'),
-    dist: '.vuepress/dist'
+    dist: '.vuepress/dist',
   }
 }

@@ -9,7 +9,7 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['start', 'develop', 'dev'],
-    preferredCommand: 'react-static start'
+    preferredCommand: 'react-static start',
   })
 
   if (possibleArgsArrs.length === 0) {
@@ -17,13 +17,13 @@ module.exports = function() {
     possibleArgsArrs.push(['react-static', 'start'])
   }
   return {
-    type: 'react-static',
+    framework: 'react-static',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 3000,
+    frameworkPort: 3000,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${3000}(/)?`, 'g'),
-    dist: 'dist'
+    dist: 'dist',
   }
 }

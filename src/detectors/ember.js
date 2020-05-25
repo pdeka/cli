@@ -11,7 +11,7 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['serve', 'start', 'run'],
-    preferredCommand: 'ember serve'
+    preferredCommand: 'ember serve',
   })
 
   if (possibleArgsArrs.length === 0) {
@@ -20,13 +20,13 @@ module.exports = function() {
   }
 
   return {
-    type: 'ember-cli',
+    framework: 'ember',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 4200,
+    frameworkPort: 4200,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${4200}(/)?`, 'g'),
-    dist: 'dist'
+    dist: 'dist',
   }
 }

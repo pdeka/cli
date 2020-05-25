@@ -10,7 +10,6 @@ const globalConfig = require('./global-config')
 const findRoot = require('./find-root')
 const chalkInstance = require('./chalk')
 const resolveConfig = require('@netlify/config')
-const getConfigPath = require('@netlify/config').getConfigPath
 
 const argv = require('minimist')(process.argv.slice(2))
 const { NETLIFY_AUTH_TOKEN, NETLIFY_API_URL } = process.env
@@ -32,15 +31,11 @@ class BaseCommand extends Command {
 
     const [token] = this.getConfigToken(authViaFlag)
 
-    // Read new netlify.toml/yml/json
-    const configPath = await getConfigPath(argv.config, cwd)
-    const config = await resolveConfig(configPath, {
-      cwd: cwd,
-      context: argv.context
-    })
-
     // Get site id & build state
     const state = new StateConfig(projectRoot)
+
+    const cachedConfig = await this.getConfig(cwd, projectRoot, state, token)
+    const { configPath, config } = cachedConfig
 
     const apiOpts = {}
     if (NETLIFY_API_URL) {
@@ -62,14 +57,35 @@ class BaseCommand extends Command {
         },
         set id(id) {
           state.set('siteId', id)
-        }
+        },
       },
       // Configuration from netlify.[toml/yml]
       config: config,
+      // Used to avoid calling @neltify/config again
+      cachedConfig: cachedConfig,
       // global cli config
       globalConfig: globalConfig,
       // state of current site dir
-      state: state
+      state: state,
+    }
+  }
+
+  // Find and resolve the Netlify configuration
+  async getConfig(cwd, projectRoot, state, token) {
+    try {
+      return await resolveConfig({
+        config: argv.config,
+        cwd: cwd,
+        repositoryRoot: projectRoot,
+        context: argv.context,
+        siteId: state.get('siteId'),
+        token,
+        mode: 'cli',
+      })
+    } catch (error) {
+      const message = error.type === 'userError' ? error.message : error.stack
+      console.error(message)
+      this.exit(1)
     }
   }
 
@@ -112,7 +128,7 @@ class BaseCommand extends Command {
         parse: (b, _) => b,
         description: 'Silence CLI output',
         allowNo: false,
-        type: 'boolean'
+        type: 'boolean',
       }
     }
     if (!opts.flags.json) {
@@ -120,7 +136,7 @@ class BaseCommand extends Command {
         parse: (b, _) => b,
         description: 'Output return values as JSON',
         allowNo: false,
-        type: 'boolean'
+        type: 'boolean',
       }
     }
     if (!opts.flags.auth) {
@@ -129,7 +145,7 @@ class BaseCommand extends Command {
         description: 'Netlify auth token',
         input: [],
         multiple: false,
-        type: 'option'
+        type: 'option',
       }
     }
 
@@ -141,7 +157,7 @@ class BaseCommand extends Command {
       Object.assign(
         {},
         {
-          context: this
+          context: this,
         },
         opts
       )
@@ -190,7 +206,7 @@ class BaseCommand extends Command {
 
     // Create ticket for auth
     const ticket = await this.netlify.api.createTicket({
-      clientId: CLIENT_ID
+      clientId: CLIENT_ID,
     })
 
     // Open browser for authentication
@@ -216,9 +232,9 @@ class BaseCommand extends Command {
         token: accessToken,
         github: {
           user: undefined,
-          token: undefined
-        }
-      }
+          token: undefined,
+        },
+      },
     })
     // Set current userId
     this.netlify.globalConfig.set('userId', userID)
@@ -228,10 +244,10 @@ class BaseCommand extends Command {
     const email = user.email
     await identify({
       name: user.full_name,
-      email: email
+      email: email,
     }).then(() => {
       return track('user_login', {
-        email: email
+        email: email,
       })
     })
 

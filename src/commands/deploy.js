@@ -11,8 +11,10 @@ const logSymbols = require('log-symbols')
 const cliSpinnerNames = Object.keys(require('cli-spinners'))
 const randomItem = require('random-item')
 const inquirer = require('inquirer')
+const isObject = require('lodash.isobject')
 const SitesCreateCommand = require('./sites/create')
 const LinkCommand = require('./link')
+const { NETLIFYDEV, NETLIFYDEVLOG, NETLIFYDEVERR } = require('../utils/logo')
 
 class DeployCommand extends Command {
   async run() {
@@ -28,12 +30,12 @@ class DeployCommand extends Command {
         command: 'deploy',
         open: flags.open,
         prod: flags.prod,
-        json: flags.json
-      }
+        json: flags.json,
+      },
     })
 
     let siteId = flags.site || site.id
-    let siteData
+    let siteData = {}
     if (!siteId) {
       this.log("This folder isn't linked to a site yet")
       const NEW_SITE = '+  Create & configure a new site'
@@ -46,8 +48,8 @@ class DeployCommand extends Command {
           type: 'list',
           name: 'initChoice',
           message: 'What would you like to do?',
-          choices: initializeOpts
-        }
+          choices: initializeOpts,
+        },
       ])
       // create site or search for one
       if (initChoice === NEW_SITE) {
@@ -66,7 +68,27 @@ class DeployCommand extends Command {
         siteData = await api.getSite({ siteId })
       } catch (e) {
         // TODO specifically handle known cases (e.g. no account access)
-        this.error(e.message)
+        if (e.status === 404) {
+          this.error('Site not found')
+        } else {
+          this.error(e.message)
+        }
+      }
+    }
+
+    if (flags.trigger) {
+      try {
+        const siteBuild = await api.createSiteBuild({ siteId: siteId })
+        this.log(
+          `${NETLIFYDEV} A new deployment was triggered successfully. Visit https://app.netlify.com/sites/${siteData.name}/deploys/${siteBuild.deploy_id} to see the logs.`
+        )
+        return
+      } catch (err) {
+        if (err.status === 404) {
+          this.error('Site not found. Please rerun "netlify link" and make sure that your site has CI configured.')
+        } else {
+          this.error(err.message)
+        }
       }
     }
 
@@ -100,14 +122,14 @@ class DeployCommand extends Command {
           name: 'promptPath',
           message: 'Publish directory',
           default: '.',
-          filter: input => path.resolve(process.cwd(), input)
-        }
+          filter: input => path.resolve(process.cwd(), input),
+        },
       ])
       deployFolder = promptPath
     }
 
     const pathInfo = {
-      'Deploy path': deployFolder
+      'Deploy path': deployFolder,
     }
 
     if (functionsFolder) {
@@ -150,7 +172,21 @@ class DeployCommand extends Command {
     let results
     try {
       if (deployToProduction) {
-        this.log('Deploying to live site URL...')
+        if (isObject(siteData.published_deploy) && siteData.published_deploy.locked) {
+          this.log(`\n${NETLIFYDEVERR} Deployments are "locked" for production context of this site\n`)
+          const { unlockChoice } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'unlockChoice',
+              message: 'Would you like to "unlock" deployments for production context to proceed?',
+              default: false,
+            },
+          ])
+          if (!unlockChoice) this.exit(0)
+          await api.unlockDeploy({ deploy_id: siteData.published_deploy.id })
+          this.log(`\n${NETLIFYDEVLOG} "Auto publishing" has been enabled for production context\n`)
+        }
+        this.log('Deploying to main site URL...')
       } else {
         this.log('Deploying to draft URL...')
       }
@@ -161,7 +197,7 @@ class DeployCommand extends Command {
         statusCb: flags.json || flags.silent ? () => {} : deployProgressCb(),
         draft: !deployToProduction,
         message: flags.message,
-        deployTimeout: flags.timeout * 1000 || 1.2e6
+        deployTimeout: flags.timeout * 1000 || 1.2e6,
       })
     } catch (e) {
       switch (true) {
@@ -196,15 +232,15 @@ class DeployCommand extends Command {
 
     const logsUrl = `${get(results, 'deploy.admin_url')}/deploys/${get(results, 'deploy.id')}`
     const msgData = {
-      Logs: `${logsUrl}`,
-      'Unique Deploy URL': deployUrl
+      'Logs': `${logsUrl}`,
+      'Unique Deploy URL': deployUrl,
     }
 
     if (deployToProduction) {
-      msgData['Live URL'] = siteUrl
+      msgData['Website URL'] = siteUrl
     } else {
       delete msgData['Unique Deploy URL']
-      msgData['Live Draft URL'] = deployUrl
+      msgData['Website Draft URL'] = deployUrl
     }
 
     // Spacer
@@ -218,7 +254,7 @@ class DeployCommand extends Command {
         site_name: results.deploy.name,
         deploy_id: results.deployId,
         deploy_url: deployUrl,
-        logs: logsUrl
+        logs: logsUrl,
       }
       if (deployToProduction) {
         jsonData.url = siteUrl
@@ -232,7 +268,7 @@ class DeployCommand extends Command {
 
     if (!deployToProduction) {
       this.log()
-      this.log('If everything looks good on your draft URL, take it live with the --prod flag.')
+      this.log('If everything looks good on your draft URL, deploy it to your main site URL with the --prod flag.')
       this.log(`${chalk.cyanBright.bold('netlify deploy --prod')}`)
       this.log()
     }
@@ -321,48 +357,52 @@ DeployCommand.examples = [
   'netlify deploy --prod',
   'netlify deploy --prod --open',
   'netlify deploy --message "A message with an $ENV_VAR"',
-  'netlify deploy --auth $NETLIFY_AUTH_TOKEN'
+  'netlify deploy --auth $NETLIFY_AUTH_TOKEN',
+  'netlify deploy --trigger',
 ]
 
 DeployCommand.flags = {
   dir: flags.string({
     char: 'd',
-    description: 'Specify a folder to deploy'
+    description: 'Specify a folder to deploy',
   }),
   functions: flags.string({
     char: 'f',
-    description: 'Specify a functions folder to deploy'
+    description: 'Specify a functions folder to deploy',
   }),
   prod: flags.boolean({
     char: 'p',
     description: 'Deploy to production',
-    default: false
+    default: false,
   }),
   open: flags.boolean({
     char: 'o',
     description: 'Open site after deploy',
-    default: false
+    default: false,
   }),
   message: flags.string({
     char: 'm',
-    description: 'A short message to include in the deploy log'
+    description: 'A short message to include in the deploy log',
   }),
   auth: flags.string({
     char: 'a',
     description: 'Netlify auth token to deploy with',
-    env: 'NETLIFY_AUTH_TOKEN'
+    env: 'NETLIFY_AUTH_TOKEN',
   }),
   site: flags.string({
     char: 's',
     description: 'A site ID to deploy to',
-    env: 'NETLIFY_SITE_ID'
+    env: 'NETLIFY_SITE_ID',
   }),
   json: flags.boolean({
-    description: 'Output deployment data as JSON'
+    description: 'Output deployment data as JSON',
   }),
   timeout: flags.integer({
-    description: 'Timeout to wait for deployment to finish'
-  })
+    description: 'Timeout to wait for deployment to finish',
+  }),
+  trigger: flags.boolean({
+    description: 'Trigger a new build of your site on Netlify without uploading local files',
+  }),
 }
 
 function deployProgressCb() {
@@ -379,7 +419,7 @@ function deployProgressCb() {
         const spinner = ev.spinner || randomItem(cliSpinnerNames)
         events[ev.type] = ora({
           text: ev.msg,
-          spinner: spinner
+          spinner: spinner,
         }).start()
         return
       }
@@ -406,7 +446,7 @@ function ensureDirectory(resolvedDeployPath, exit) {
   try {
     stat = fs.statSync(resolvedDeployPath)
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if (e.status === 'ENOENT') {
       console.log(
         `No such directory ${resolvedDeployPath}! Did you forget to create a functions folder or run a build?`
       )
@@ -414,7 +454,7 @@ function ensureDirectory(resolvedDeployPath, exit) {
     }
 
     // Improve the message of permission errors
-    if (e.code === 'EACCES') {
+    if (e.status === 'EACCES') {
       console.log('Permission error when trying to access deploy folder')
       exit(1)
     }

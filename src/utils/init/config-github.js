@@ -1,7 +1,7 @@
 const version = require('../../../package.json').version
 const os = require('os')
 const ghauth = require('../../utils/gh-auth')
-const Octokit = require('@octokit/rest')
+const { Octokit } = require('@octokit/rest')
 const parseGitRemote = require('parse-github-url')
 const inquirer = require('inquirer')
 const path = require('path')
@@ -22,13 +22,13 @@ async function configGithub(ctx, site, repo) {
     const newToken = await ghauth({
       scopes: ['admin:org', 'admin:public_key', 'repo', 'user'],
       userAgent: UA,
-      note: `Netlify CLI ${os.userInfo().username}@${os.hostname()}`
+      note: `Netlify CLI ${os.userInfo().username}@${os.hostname()}`,
     })
     globalConfig.set(`users.${current}.auth.github`, newToken)
     ghtoken = newToken
   }
   const octokit = new Octokit({
-    auth: `token ${ghtoken.token}`
+    auth: `token ${ghtoken.token}`,
   })
 
   const key = await api.createDeployKey()
@@ -39,7 +39,7 @@ async function configGithub(ctx, site, repo) {
     key: key.public_key,
     repo: parsedURL.name,
     owner: parsedURL.owner,
-    read_only: true
+    read_only: true,
   })
 
   repo.deploy_key_id = key.id
@@ -83,8 +83,8 @@ async function configGithub(ctx, site, repo) {
         type: 'confirm',
         name: 'makeNetlifyTOML',
         message: 'No netlify.toml detected. Would you like to create one with these build settings?',
-        default: true
-      }
+        default: true,
+      },
     ])
     if (makeNetlifyTOML && ctx.netlify.site && ctx.netlify.site.root) {
       fs.writeFileSync(tomlpath, makeNetlifyTOMLtemplate({ command: buildCmd, publish: buildDir }))
@@ -101,7 +101,7 @@ async function configGithub(ctx, site, repo) {
 
   const results = await octokit.repos.get({
     owner: parsedURL.owner,
-    repo: parsedURL.name
+    repo: parsedURL.name,
   })
 
   repo.id = results.data.id
@@ -114,7 +114,7 @@ async function configGithub(ctx, site, repo) {
   const hooks = await octokit.repos.listHooks({
     owner: parsedURL.owner,
     repo: parsedURL.name,
-    per_page: 100
+    per_page: 100,
   })
 
   let hookExists = false
@@ -131,10 +131,10 @@ async function configGithub(ctx, site, repo) {
         name: 'web',
         config: {
           url: site.deploy_hook,
-          content_type: 'json'
+          content_type: 'json',
         },
         events: ['push', 'pull_request', 'delete'],
-        active: true
+        active: true,
       })
     } catch (e) {
       // Ignore exists error if the list doesn't return all installed hooks
@@ -160,9 +160,9 @@ async function configGithub(ctx, site, repo) {
         type: 'github_commit_status',
         event: 'deploy_created',
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Created Github deploy_created Hook: ${h.id}`)
   } else {
@@ -170,9 +170,9 @@ async function configGithub(ctx, site, repo) {
       hook_id: createdHook.id,
       body: {
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Updated Github Created Hook: ${h.id}`)
   }
@@ -184,9 +184,9 @@ async function configGithub(ctx, site, repo) {
         type: 'github_commit_status',
         event: 'deploy_failed',
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Created Github deploy_failed hook: ${h.id}`)
   } else {
@@ -194,9 +194,9 @@ async function configGithub(ctx, site, repo) {
       hook_id: failedHook.id,
       body: {
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Updated Github deploy_failed hook: ${h.id}`)
   }
@@ -208,9 +208,9 @@ async function configGithub(ctx, site, repo) {
         type: 'github_commit_status',
         event: 'deploy_building',
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Created Github deploy_building hook: ${h.id}`)
   } else {
@@ -218,9 +218,9 @@ async function configGithub(ctx, site, repo) {
       hook_id: buildingHook.id,
       body: {
         data: {
-          access_token: ghtoken.token
-        }
-      }
+          access_token: ghtoken.token,
+        },
+      },
     })
     // ctx.log(`Updated Github deploy_building hook: ${h.id}`)
   }

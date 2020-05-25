@@ -29,7 +29,9 @@ async function getRepoData(remote) {
     }
 
     if (!gitConfig.remote.hasOwnProperty(remote) || isEmpty(gitConfig.remote[remote])) {
-      throw new Error(`The specified remote "${remote}" is not defined in Git repo. Please use --gitRemoteName flag to specify a remote.`)
+      throw new Error(
+        `The specified remote "${remote}" is not defined in Git repo. Please use --gitRemoteName flag to specify a remote.`
+      )
     }
 
     const remoteData = parseGitRemote(gitConfig.remote[remote].url)
@@ -43,7 +45,7 @@ async function getRepoData(remote) {
       repo_path: remoteData.path,
       repo_branch: repoData.branch,
       allowed_branches: [repoData.branch],
-      host: remoteData.host
+      host: remoteData.host,
     }
 
     switch (remoteData.host) {
@@ -59,7 +61,7 @@ async function getRepoData(remote) {
   } catch (error) {
     // console.log('error', error)
     return {
-      error: error.message
+      error: error.message,
     }
   }
 

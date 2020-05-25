@@ -10,7 +10,7 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['dev', 'start'],
-    preferredCommand: 'sapper dev'
+    preferredCommand: 'sapper dev',
   })
 
   if (possibleArgsArrs.length === 0) {
@@ -19,13 +19,13 @@ module.exports = function() {
   }
 
   return {
-    type: 'sapper',
+    framework: 'sapper',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 3000,
+    frameworkPort: 3000,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${3000}(/)?`, 'g'),
-    dist: 'static'
+    dist: 'static',
   }
 }

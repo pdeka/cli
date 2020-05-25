@@ -9,7 +9,7 @@ module.exports = function() {
   /** everything below now assumes that we are within Quasar */
 
   const possibleArgsArrs = scanScripts({
-    preferredScriptsArr: ['serve', 'start', 'run', 'dev']
+    preferredScriptsArr: ['serve', 'start', 'run', 'dev'],
     // NOTE: this is comented out as it was picking this up in cordova related scripts.
     // preferredCommand: "quasar dev"
   })
@@ -20,13 +20,13 @@ module.exports = function() {
   }
 
   return {
-    type: 'quasar-cli-v0.17',
+    framework: 'quasar-cli-v0.17',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 8080,
+    frameworkPort: 8080,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${8080}(/)?`, 'g'),
-    dist: '.quasar'
+    dist: '.quasar',
   }
 }

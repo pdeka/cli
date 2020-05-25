@@ -6,13 +6,13 @@ const os = require('os')
 function findRoot(cwd = process.cwd(), opts) {
   opts = Object.assign(
     {
-      rootIndicators: ['.netlify', 'netlify.toml', '.git']
+      rootIndicators: ['.netlify', 'netlify.toml', '.git'],
     },
     opts
   )
 
   const rootIndicator = findUp.sync(opts.rootIndicators, { cwd: cwd })
-  if (typeof rootIndicator !== 'string' || rootIndicator == null) return cwd
+  if (typeof rootIndicator !== 'string') return cwd
 
   const indicatorRoot = path.dirname(rootIndicator)
   // To avoid thinking our project root is our global config

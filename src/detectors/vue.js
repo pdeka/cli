@@ -10,7 +10,7 @@ module.exports = function() {
 
   const possibleArgsArrs = scanScripts({
     preferredScriptsArr: ['serve', 'start', 'run'],
-    preferredCommand: 'vue-cli-service serve'
+    preferredCommand: 'vue-cli-service serve',
   })
 
   if (possibleArgsArrs.length === 0) {
@@ -19,13 +19,13 @@ module.exports = function() {
   }
 
   return {
-    type: 'vue-cli',
+    framework: 'vue',
     command: getYarnOrNPMCommand(),
     port: 8888,
-    proxyPort: 8080,
+    frameworkPort: 8080,
     env: { ...process.env },
     possibleArgsArrs,
     urlRegexp: new RegExp(`(http://)([^:]+:)${8080}(/)?`, 'g'),
-    dist: 'dist'
+    dist: 'dist',
   }
 }
