@@ -159,12 +159,7 @@ git remote add origin https://github.com/YourUserName/RepoName.git
     }
 
 
-    const siteName =
-      repo.remoteData.name + "-" +
-      Math.random()
-        .toString(36)
-        .replace(/[^a-z]+/g, '')
-        .substr(0, 8);
+    const siteName = repo.remoteData.name 
 
     this.log("Site Name: " + siteName);
 
